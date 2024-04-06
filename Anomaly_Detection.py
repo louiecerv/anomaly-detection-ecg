@@ -174,11 +174,30 @@ def app():
         batch_size = 128
         early_stopping = EarlyStopping(patience=10, min_delta=1e-3, monitor="val_loss", restore_best_weights=True)
 
-        # Capture the summary output
-        with contextlib.redirect_stdout(io.StringIO()) as new_stdout:
-            history = model.fit(X_train, X_train, epochs=epochs, batch_size=batch_size,
+        history = model.fit(X_train, X_train, epochs=epochs, batch_size=batch_size,
                             validation_split=0.1, callbacks=[early_stopping])
-        st.text(summary_str)
+        
+        import matplotlib.pyplot as plt
+
+        # Create a figure and an axes object
+        fig, ax = plt.subplots()
+
+        # Plot the training loss
+        ax.plot(history.history['loss'], label="Training loss")
+
+        # Plot the validation loss with a dashed line style
+        ax.plot(history.history['val_loss'], label="Validation loss", ls="--")
+
+        # Add legend, title, and labels
+        ax.legend(shadow=True, frameon=True, facecolor="inherit", loc="best", fontsize=9)
+        ax.set_title("Training loss")
+        ax.set_ylabel("Loss")
+        ax.set_xlabel("Epoch")
+
+        # Show the plot
+        st.pyplot(fig)
+
+
 
 
 tf.keras.utils.set_random_seed(1024)
