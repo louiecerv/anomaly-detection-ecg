@@ -264,7 +264,7 @@ def app():
         st.write("Testing", evaluate_model(threshold, anomaly, model, X_test))
         st.write("Anomaly", evaluate_model(threshold, anomaly, model, anomaly))
 
-        plot_confusion_matrix(model, X_train, X_test, anomaly, threshold=threshold)
+        plot_confusion_matrix(model, X_train, X_test, anomaly, threshold)
 
 def predict(model, X):
     pred = model.predict(X, verbose=False)
@@ -290,7 +290,7 @@ def evaluate_model(threshold, anomaly, model, data):
     return f"Accuracy: {accuracy:.2%}"
 
 def prepare_labels(model, train, test, anomaly, threshold):
-    ytrue = np.concatenate((np.ones(len(X_train)+len(X_test), dtype=int), np.zeros(len(anomaly), dtype=int)))
+    ytrue = np.concatenate((np.ones(len(train)+len(test), dtype=int), np.zeros(len(anomaly), dtype=int)))
     _, train_loss = predict(model, train)
     _, test_loss = predict(model, test)
     _, anomaly_loss = predict(model, anomaly)
@@ -301,7 +301,7 @@ def prepare_labels(model, train, test, anomaly, threshold):
     return ytrue, ypred
 
 def plot_confusion_matrix(model, train, test, anomaly, threshold):
-    ytrue, ypred = prepare_labels(model, train, test, anomaly, threshold=threshold)
+    ytrue, ypred = prepare_labels(model, train, test, anomaly, threshold)
     accuracy = accuracy_score(ytrue, ypred)
     precision = precision_score(ytrue, ypred)
     recall = recall_score(ytrue, ypred)
