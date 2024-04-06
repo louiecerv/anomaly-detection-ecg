@@ -1,13 +1,24 @@
 #Input the relevant libraries
-import numpy as np
-import pandas as pd
 import streamlit as st
-import altair as alt
+import numpy as np
+np.set_printoptions(suppress=True)
+import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.preprocessing import StandardScaler
+from scipy.io import arff
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_breast_cancer
+import matplotlib
+matplotlib.rcParams["figure.figsize"] = (6, 4)
+plt.style.use("ggplot")
+import tensorflow as tf
+from tensorflow import data
+from tensorflow.keras.models import Model, Sequential
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.metrics import mae
+from tensorflow.keras import layers
+from tensorflow import keras
+from sklearn.metrics import accuracy_score, recall_score, precision_score, confusion_matrix, f1_score, classification_report
+import os
 
 import time
 
@@ -142,6 +153,47 @@ def app():
     X_train, X_test = train_test_split(normal, test_size=0.15, random_state=45, shuffle=True)
     st.write(f"Train shape: {X_train.shape}, Test shape: {X_test.shape}, anomaly shape: {anomaly.shape}")
 
+
+tf.keras.utils.set_random_seed(1024)
+class AutoEncoder(Model):
+    def __init__(self, input_dim, latent_dim):
+        super(AutoEncoder, self).__init__()
+        self.input_dim = input_dim
+        self.latent_dim = latent_dim
+
+        self.encoder = tf.keras.Sequential([
+            layers.Input(shape=(input_dim,)),
+            layers.Reshape((input_dim, 1)),  # Reshape to 3D for Conv1D
+            layers.Conv1D(128, 3, strides=1, activation='relu', padding="same"),
+            layers.BatchNormalization(),
+            layers.MaxPooling1D(2, padding="same"),
+            layers.Conv1D(128, 3, strides=1, activation='relu', padding="same"),
+            layers.BatchNormalization(),
+            layers.MaxPooling1D(2, padding="same"),
+            layers.Conv1D(latent_dim, 3, strides=1, activation='relu', padding="same"),
+            layers.BatchNormalization(),
+            layers.MaxPooling1D(2, padding="same"),
+        ])
+        # Previously, I was using UpSampling. I am trying Transposed Convolution this time around.
+        self.decoder = tf.keras.Sequential([
+            layers.Conv1DTranspose(latent_dim, 3, strides=1, activation='relu', padding="same"),
+#             layers.UpSampling1D(2),
+            layers.BatchNormalization(),
+            layers.Conv1DTranspose(128, 3, strides=1, activation='relu', padding="same"),
+#             layers.UpSampling1D(2),
+            layers.BatchNormalization(),
+            layers.Conv1DTranspose(128, 3, strides=1, activation='relu', padding="same"),
+#             layers.UpSampling1D(2),
+            layers.BatchNormalization(),
+            layers.Flatten(),
+            layers.Dense(input_dim)
+        ])
+
+    def call(self, X):
+        encoded = self.encoder(X)
+        decoded = self.decoder(encoded)
+        return decoded
+    
 #run the app
 if __name__ == "__main__":
     app()
