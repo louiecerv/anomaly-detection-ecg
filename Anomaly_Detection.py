@@ -19,7 +19,6 @@ from tensorflow.keras import layers
 from tensorflow import keras
 from sklearn.metrics import accuracy_score, recall_score, precision_score, confusion_matrix, f1_score, classification_report
 import os
-
 import time
 
 def plot_smoothed_mean(data, class_name = "normal", step_size=5, ax=None):
@@ -152,6 +151,16 @@ def app():
 
     X_train, X_test = train_test_split(normal, test_size=0.15, random_state=45, shuffle=True)
     st.write(f"Train shape: {X_train.shape}, Test shape: {X_test.shape}, anomaly shape: {anomaly.shape}")
+
+    if st.button("Start"):
+        input_dim = X_train.shape[-1]
+        latent_dim = 32
+
+        model = AutoEncoder(input_dim, latent_dim)
+        model.build((None, input_dim))
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss="mae")
+        summary = model.summary()
+        st.write(summary)
 
 
 tf.keras.utils.set_random_seed(1024)
