@@ -21,6 +21,7 @@ from sklearn.metrics import accuracy_score, recall_score, precision_score, confu
 import os
 import time
 import contextlib
+import io  # Import the io module
 
 def plot_smoothed_mean(data, class_name = "normal", step_size=5, ax=None):
     df = pd.DataFrame(data)
