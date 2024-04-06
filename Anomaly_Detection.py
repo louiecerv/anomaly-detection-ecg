@@ -289,7 +289,7 @@ def evaluate_model(threshold, anomaly, model, data):
         accuracy = np.sum(loss <= threshold)/len(data)
     return f"Accuracy: {accuracy:.2%}"
 
-def prepare_labels(model, train, test, anomaly, threshold=threshold):
+def prepare_labels(model, train, test, anomaly, threshold):
     ytrue = np.concatenate((np.ones(len(X_train)+len(X_test), dtype=int), np.zeros(len(anomaly), dtype=int)))
     _, train_loss = predict(model, train)
     _, test_loss = predict(model, test)
@@ -300,7 +300,7 @@ def prepare_labels(model, train, test, anomaly, threshold=threshold):
     ypred = np.concatenate((train_pred, test_pred, anomaly_pred))
     return ytrue, ypred
 
-def plot_confusion_matrix(model, train, test, anomaly, threshold=threshold):
+def plot_confusion_matrix(model, train, test, anomaly, threshold):
     ytrue, ypred = prepare_labels(model, train, test, anomaly, threshold=threshold)
     accuracy = accuracy_score(ytrue, ypred)
     precision = precision_score(ytrue, ypred)
