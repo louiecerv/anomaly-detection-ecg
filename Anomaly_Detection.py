@@ -160,7 +160,7 @@ def app():
 
         model = AutoEncoder(input_dim, latent_dim)
         model.build((None, input_dim))
-        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss="mae", metrics=["accuracy"])
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss="mae", metrics=['mean_squared_error', 'mean_absolute_error'])
 
         # Capture the summary output
         with contextlib.redirect_stdout(io.StringIO()) as new_stdout:
