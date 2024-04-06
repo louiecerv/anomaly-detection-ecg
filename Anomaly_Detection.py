@@ -177,8 +177,6 @@ def app():
         history = model.fit(X_train, X_train, epochs=epochs, batch_size=batch_size,
                             validation_split=0.1, callbacks=[early_stopping])
         
-        import matplotlib.pyplot as plt
-
         # Create a figure and an axes object
         fig, ax = plt.subplots()
 
