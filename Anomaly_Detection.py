@@ -266,6 +266,9 @@ def app():
 
         plot_confusion_matrix(model, X_train, X_test, anomaly, threshold)
 
+        ytrue, ypred = prepare_labels(model, X_train, X_test, anomaly, threshold)
+        st.write(classification_report(ytrue, ypred, target_names=CLASS_NAMES))
+
 def predict(model, X):
     pred = model.predict(X, verbose=False)
     loss = mae(pred, X)
