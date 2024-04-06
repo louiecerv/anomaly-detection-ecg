@@ -166,7 +166,6 @@ def app():
         with contextlib.redirect_stdout(io.StringIO()) as new_stdout:
             model.summary()
             summary_str = new_stdout.getvalue()
-
         # Display the summary using st.text()
         st.text(summary_str)
 
@@ -174,37 +173,40 @@ def app():
         batch_size = 128
         early_stopping = EarlyStopping(patience=10, min_delta=1e-3, monitor="val_loss", restore_best_weights=True)
 
-        with contextlib.redirect_stdout(io.StringIO()) as new_stdout:
-            history = model.fit(X_train, X_train, epochs=epochs, batch_size=batch_size,
-                        validation_split=0.1, callbacks=[early_stopping, CustomCallback()])
-            training_output = new_stdout.getvalue()
 
-        # Display entire output as text
-        st.text(training_output)
+        history = model.fit(X_train, X_train, epochs=epochs, batch_size=batch_size,
+            validation_split=0.1, callbacks=[early_stopping, CustomCallback()])
 
-        # Alternatively, structure and format output elements as needed
-        st.write("Training history:")
-        st.write(history.history)
         st.write("Best validation loss:", history.history['val_loss'][-1])
 
-        
-        # Create a figure and an axes object
-        fig, ax = plt.subplots()
+        # Extract loss and accuracy values from history
+        train_loss = history.history['loss']
+        val_loss = history.history['val_loss']
+        train_acc = history.history['accuracy']
+        val_acc = history.history['val_accuracy']
 
-        # Plot the training loss
-        ax.plot(history.history['loss'], label="Training loss")
+        # Create the figure with two side-by-side subplots
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))  # Adjust figsize for better visualization
 
-        # Plot the validation loss with a dashed line style
-        ax.plot(history.history['val_loss'], label="Validation loss", ls="--")
+        # Plot loss on the first subplot (ax1)
+        ax1.plot(train_loss, label='Training Loss')
+        ax1.plot(val_loss, label='Validation Loss')
+        ax1.set_xlabel('Epoch')
+        ax1.set_ylabel('Loss')
+        ax1.legend()
 
-        # Add legend, title, and labels
-        ax.legend(shadow=True, frameon=True, facecolor="inherit", loc="best", fontsize=9)
-        ax.set_title("Training loss")
-        ax.set_ylabel("Loss")
-        ax.set_xlabel("Epoch")
+        # Plot accuracy on the second subplot (ax2)
+        ax2.plot(train_acc, 'g--', label='Training Accuracy')
+        ax2.plot(val_acc, 'r--', label='Validation Accuracy')
+        ax2.set_xlabel('Epoch')
+        ax2.set_ylabel('Accuracy')
+        ax2.legend()
 
-        # Show the plot
-        st.pyplot(fig)
+        # Set the main title (optional)
+        fig.suptitle('Training and Validation Performance')
+
+        plt.tight_layout()  # Adjust spacing between subplots
+        st.pyplot(fig) 
 
 tf.keras.utils.set_random_seed(1024)
 
