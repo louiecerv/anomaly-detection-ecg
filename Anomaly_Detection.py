@@ -170,8 +170,8 @@ def app():
         # Display the summary using st.text()
         st.text(summary_str)
 
-
 tf.keras.utils.set_random_seed(1024)
+
 class AutoEncoder(Model):
     def __init__(self, input_dim, latent_dim):
         super(AutoEncoder, self).__init__()
@@ -191,20 +191,21 @@ class AutoEncoder(Model):
             layers.BatchNormalization(),
             layers.MaxPooling1D(2, padding="same"),
         ])
-        # Previously, I was using UpSampling. I am trying Transposed Convolution this time around.
+
         self.decoder = tf.keras.Sequential([
             layers.Conv1DTranspose(latent_dim, 3, strides=1, activation='relu', padding="same"),
-#             layers.UpSampling1D(2),
             layers.BatchNormalization(),
             layers.Conv1DTranspose(128, 3, strides=1, activation='relu', padding="same"),
-#             layers.UpSampling1D(2),
             layers.BatchNormalization(),
             layers.Conv1DTranspose(128, 3, strides=1, activation='relu', padding="same"),
-#             layers.UpSampling1D(2),
             layers.BatchNormalization(),
             layers.Flatten(),
             layers.Dense(input_dim)
         ])
+
+    def build(self, input_shape):  # Define the build method
+        # No need to modify anything here as layers are already built during initialization
+        super(AutoEncoder, self).build(input_shape)
 
     def call(self, X):
         encoded = self.encoder(X)
