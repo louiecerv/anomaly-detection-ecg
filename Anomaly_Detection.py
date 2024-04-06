@@ -161,14 +161,16 @@ def app():
         model.build((None, input_dim))
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss="mae")
 
-        # Display the summary using st.text()
-        summary_str = []
-        # Redirect sys.stdout to capture the print output
-        sys.stdout = capture_summary(summary_str=summary_str)
-        model.summary()
-        sys.stdout = sys.__stdout__  # Reset sys.stdout to its original value
-        # Display captured summary
-        st.text('\n'.join(summary_str))
+    # Capture the summary output
+    summary_str = []
+    # Redirect sys.stdout to capture the print output
+    original_stdout = sys.stdout
+    sys.stdout = lambda x: summary_str.append(x)  # Redirect stdout to summary_str list
+    model.summary()
+    sys.stdout = original_stdout  # Reset sys.stdout to its original value
+
+    # Display the summary using st.text()
+    st.text('\n'.join(summary_str))
 
 # Custom print function to capture summary output
 def capture_summary(x, summary_str):
