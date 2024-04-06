@@ -309,7 +309,7 @@ def plot_confusion_matrix(model, train, test, anomaly, threshold):
     precision = precision_score(ytrue, ypred)
     recall = recall_score(ytrue, ypred)
     f1 = f1_score(ytrue, ypred)
-    print(f"""\
+    st.write(f"""\
         Accuracy: {accuracy:.2%}
         Precision: {precision:.2%}
         Recall: {recall:.2%}
