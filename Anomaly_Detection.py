@@ -117,13 +117,13 @@ def app():
     normal_df_copy = normal_df.copy()
     anomaly_df_copy = anomaly_df.copy()
 
-    normal_df_copy = normal_df_copy.set_axis(range(1, 188), axis=1)
-    anomaly_df_copy = anomaly_df_copy.set_axis(range(1, 188), axis=1)
+    normal_df_copy = normal_df_copy.set_axis(range(1, 189), axis=1)
+    anomaly_df_copy = anomaly_df_copy.set_axis(range(1, 189), axis=1)
     normal_df_copy = normal_df_copy.assign(target = CLASS_NAMES[0])
     anomaly_df_copy = anomaly_df_copy.assign(target = CLASS_NAMES[1])
     df = pd.concat((normal_df_copy, anomaly_df_copy))
 
-"""
+
     fig, axes = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
     axes = axes.flatten()
     for i, label in enumerate(CLASS_NAMES, start=1):
@@ -134,7 +134,7 @@ def app():
     plt.tight_layout()
     st.pyplot(fig)
 
-"""
+
 #run the app
 if __name__ == "__main__":
     app()
