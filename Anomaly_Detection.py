@@ -260,15 +260,14 @@ def app():
         fig.savefig("autoencoder.png")
         st.pyplot(fig)
 
-        st.write("Training", evaluate_model(model, X_train))
-        st.write("Testing", evaluate_model(model, X_test))
-        st.write("Anomaly", evaluate_model(model, anomaly))
+        st.write("Training", evaluate_model(threshold, anomaly, model, X_train))
+        st.write("Testing", evaluate_model(threshold, anomaly, model, X_test))
+        st.write("Anomaly", evaluate_model(threshold, anomaly, model, anomaly))
 
 def predict(model, X):
     pred = model.predict(X, verbose=False)
     loss = mae(pred, X)
     return pred, loss
-
 
 def plot_examples(model, data, ax, title):
     pred, loss = predict(model, data)
@@ -280,7 +279,7 @@ def plot_examples(model, data, ax, title):
 #                bbox_to_anchor = (0, 0, 0.8, 0.25))
     ax.set_title(f"{title} (loss: {loss[0]:.3f})", fontsize=9.5)
 
-def evaluate_model(model, data):
+def evaluate_model(threshold, anomaly, model, data):
     pred, loss = predict(model, data)
     if id(data) == id(anomaly):
         accuracy = np.sum(loss > threshold)/len(data)
