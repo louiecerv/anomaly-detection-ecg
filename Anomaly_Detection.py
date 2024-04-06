@@ -179,11 +179,13 @@ def app():
 
         st.write("Best validation loss:", history.history['val_loss'][-1])
 
-        # Extract loss and accuracy values from history
+         # Extract loss and MAE/MSE values from history
         train_loss = history.history['loss']
         val_loss = history.history['val_loss']
-        train_acc = history.history['accuracy']
-        val_acc = history.history['val_accuracy']
+        train_mae = history.history['mean_absolute_error']
+        val_mae = history.history['val_mean_absolute_error']
+        train_mse = history.history['mean_squared_error']
+        val_mse = history.history['val_mean_squared_error']
 
         # Create the figure with two side-by-side subplots
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))  # Adjust figsize for better visualization
@@ -196,8 +198,10 @@ def app():
         ax1.legend()
 
         # Plot accuracy on the second subplot (ax2)
-        ax2.plot(train_acc, 'g--', label='Training Accuracy')
-        ax2.plot(val_acc, 'r--', label='Validation Accuracy')
+        ax2.plot(train_mae, 'g--', label='Training Mean Absolute Error')
+        ax2.plot(train_mse, 'g--', label='Training Mean Squared Error')
+        ax2.plot(val_mae, 'r--', label='Validation Mean Absolute Error')
+        ax2.plot(val_mse, 'r--', label='Validation Mean Squared Error')
         ax2.set_xlabel('Epoch')
         ax2.set_ylabel('Accuracy')
         ax2.legend()
@@ -206,7 +210,7 @@ def app():
         fig.suptitle('Training and Validation Performance')
 
         plt.tight_layout()  # Adjust spacing between subplots
-        st.pyplot(fig) 
+        st.pyplot(fig)   
 
 tf.keras.utils.set_random_seed(1024)
 
@@ -255,10 +259,10 @@ class CustomCallback(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         # Get the current loss and accuracy metrics
         loss = logs['loss']
-        accuracy = logs['accuracy']
+        mae = logs['mean_absolute_error']
         
         # Update the Streamlit interface with the current epoch's output
-        st.text(f"Epoch {epoch}: loss = {loss:.4f}, accuracy = {accuracy:.4f}")
+        st.text(f"Epoch {epoch}: loss = {loss:.4f} Mean Absolute Errror = {mae:.4f}")
 
 #run the app
 if __name__ == "__main__":
