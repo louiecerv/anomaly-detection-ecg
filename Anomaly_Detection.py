@@ -11,6 +11,36 @@ from sklearn.datasets import load_breast_cancer
 
 import time
 
+def plot_smoothed_mean(data, class_name = "normal", step_size=5, ax=None):
+    df = pd.DataFrame(data)
+    roll_df = df.rolling(step_size)
+    smoothed_mean = roll_df.mean().dropna().reset_index(drop=True)
+    smoothed_std = roll_df.std().dropna().reset_index(drop=True)
+    margin = 3*smoothed_std
+    lower_bound = (smoothed_mean - margin).values.flatten()
+    upper_bound = (smoothed_mean + margin).values.flatten()
+
+    ax.plot(smoothed_mean.index, smoothed_mean)
+    ax.fill_between(smoothed_mean.index, lower_bound, y2=upper_bound, alpha=0.3, color="red")
+    ax.set_title(class_name, fontsize=9)
+
+def plot_sample(normal, anomaly):
+    index = np.random.randint(0, len(normal), 2)
+
+    fig, ax = plt.subplots(1, 2, sharey=True, figsize=(10, 4))
+    ax[0].plot(normal.iloc[index[0], :].values, label=f"Case {index[0]}")
+    ax[0].plot(normal.iloc[index[1], :].values, label=f"Case {index[1]}")
+    ax[0].legend(shadow=True, frameon=True, facecolor="inherit", loc=1, fontsize=9)
+    ax[0].set_title("Normal")
+
+    ax[1].plot(anomaly.iloc[index[0], :].values, label=f"Case {index[0]}")
+    ax[1].plot(anomaly.iloc[index[1], :].values, label=f"Case {index[1]}")
+    ax[1].legend(shadow=True, frameon=True, facecolor="inherit", loc=1, fontsize=9)
+    ax[1].set_title("Anomaly")
+
+    plt.tight_layout()
+    st.pyplot(fig)
+
 # Define the Streamlit app
 def app():
 
@@ -93,6 +123,7 @@ def app():
     anomaly_df_copy = anomaly_df_copy.assign(target = CLASS_NAMES[1])
     df = pd.concat((normal_df_copy, anomaly_df_copy))
 
+"""
     fig, axes = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
     axes = axes.flatten()
     for i, label in enumerate(CLASS_NAMES, start=1):
@@ -103,36 +134,7 @@ def app():
     plt.tight_layout()
     st.pyplot(fig)
 
-def plot_smoothed_mean(data, class_name = "normal", step_size=5, ax=None):
-    df = pd.DataFrame(data)
-    roll_df = df.rolling(step_size)
-    smoothed_mean = roll_df.mean().dropna().reset_index(drop=True)
-    smoothed_std = roll_df.std().dropna().reset_index(drop=True)
-    margin = 3*smoothed_std
-    lower_bound = (smoothed_mean - margin).values.flatten()
-    upper_bound = (smoothed_mean + margin).values.flatten()
-
-    ax.plot(smoothed_mean.index, smoothed_mean)
-    ax.fill_between(smoothed_mean.index, lower_bound, y2=upper_bound, alpha=0.3, color="red")
-    ax.set_title(class_name, fontsize=9)
-
-def plot_sample(normal, anomaly):
-    index = np.random.randint(0, len(normal), 2)
-
-    fig, ax = plt.subplots(1, 2, sharey=True, figsize=(10, 4))
-    ax[0].plot(normal.iloc[index[0], :].values, label=f"Case {index[0]}")
-    ax[0].plot(normal.iloc[index[1], :].values, label=f"Case {index[1]}")
-    ax[0].legend(shadow=True, frameon=True, facecolor="inherit", loc=1, fontsize=9)
-    ax[0].set_title("Normal")
-
-    ax[1].plot(anomaly.iloc[index[0], :].values, label=f"Case {index[0]}")
-    ax[1].plot(anomaly.iloc[index[1], :].values, label=f"Case {index[1]}")
-    ax[1].legend(shadow=True, frameon=True, facecolor="inherit", loc=1, fontsize=9)
-    ax[1].set_title("Anomaly")
-
-    plt.tight_layout()
-    st.pyplot(fig)
-
+"""
 #run the app
 if __name__ == "__main__":
     app()
