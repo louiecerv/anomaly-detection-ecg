@@ -20,7 +20,7 @@ from tensorflow import keras
 from sklearn.metrics import accuracy_score, recall_score, precision_score, confusion_matrix, f1_score, classification_report
 import os
 import time
-import sys
+import contextlib
 
 def plot_smoothed_mean(data, class_name = "normal", step_size=5, ax=None):
     df = pd.DataFrame(data)
@@ -162,15 +162,12 @@ def app():
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss="mae")
 
         # Capture the summary output
-        summary_str = []
-        # Redirect sys.stdout to capture the print output
-        original_stdout = sys.stdout
-        sys.stdout = lambda x: summary_str.append(x)  # Redirect stdout to summary_str list
-        model.summary()
-        sys.stdout = original_stdout  # Reset sys.stdout to its original value
+        with contextlib.redirect_stdout(io.StringIO()) as new_stdout:
+            model.summary()
+            summary_str = new_stdout.getvalue()
 
         # Display the summary using st.text()
-        st.text('\n'.join(summary_str))
+        st.text(summary_str)
 
 
 tf.keras.utils.set_random_seed(1024)
