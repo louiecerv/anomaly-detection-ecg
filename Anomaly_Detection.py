@@ -260,9 +260,9 @@ def app():
         fig.savefig("autoencoder.png")
         st.pyplot(fig)
 
-        st.pyplot("Training", evaluate_model(model, X_train))
-        st.pyplot("Testing", evaluate_model(model, X_test))
-        st.pyplot("Anomaly", evaluate_model(model, anomaly))
+        st.write("Training", evaluate_model(model, X_train))
+        st.write("Testing", evaluate_model(model, X_test))
+        st.write("Anomaly", evaluate_model(model, anomaly))
 
 def predict(model, X):
     pred = model.predict(X, verbose=False)
