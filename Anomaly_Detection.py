@@ -244,10 +244,39 @@ def app():
         ax.legend(shadow=True, frameon=True, facecolor="inherit", loc="best", fontsize=9)
         st.pyplot(fig)
 
+        fig, axes = plt.subplots(2, 5, sharey=True, sharex=True, figsize=(12, 6))
+        random_indexes = np.random.randint(0, len(X_train), size=5)
+
+        for i, idx in enumerate(random_indexes):
+            data = X_train[[idx]]
+            plot_examples(model, data, ax=axes[0, i], title="Normal")
+
+        for i, idx in enumerate(random_indexes):
+            data = anomaly[[idx]]
+            plot_examples(model, data, ax=axes[1, i], title="anomaly")
+
+        plt.tight_layout()
+        fig.suptitle("Sample plots (Actual vs Reconstructed by the CNN autoencoder)", y=1.04, weight="bold")
+        fig.savefig("autoencoder.png")
+        st.pyplot(fig)
+
+
 def predict(model, X):
     pred = model.predict(X, verbose=False)
     loss = mae(pred, X)
     return pred, loss
+
+
+def plot_examples(model, data, ax, title):
+    pred, loss = predict(model, data)
+    ax.plot(data.flatten(), label="Actual")
+    ax.plot(pred[0], label = "Predicted")
+    ax.fill_between(range(1, 188), data.flatten(), pred[0], alpha=0.3, color="r")
+    ax.legend(shadow=True, frameon=True,
+              facecolor="inherit", loc=1, fontsize=7)
+#                bbox_to_anchor = (0, 0, 0.8, 0.25))
+    ax.set_title(f"{title} (loss: {loss[0]:.3f})", fontsize=9.5)
+
 
 tf.keras.utils.set_random_seed(1024)
 
