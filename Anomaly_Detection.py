@@ -113,8 +113,8 @@ def app():
 
     #normal_df = pd.read_csv("heartbeats/ptbdb_normal.csv").iloc[:, :-1]
     #anomaly_df = pd.read_csv("heartbeats/ptbdb_abnormal.csv").iloc[:, :-1]
-    normal_df = pd.read_csv("heartbeats/ptbdb_normal.csv", header=0)
-    anomaly_df = pd.read_csv("heartbeats/ptbdb_abnormal.csv", header=0)
+    normal_df = pd.read_csv("heartbeats/ptbdb_normal.csv")
+    anomaly_df = pd.read_csv("heartbeats/ptbdb_abnormal.csv")
 
     st.subheader('Browse the ECG Dataset')
     st.write(normal_df)
@@ -279,7 +279,7 @@ def plot_examples(model, data, ax, title):
     pred, loss = predict(model, data)
     ax.plot(data.flatten(), label="Actual")
     ax.plot(pred[0], label = "Predicted")
-    ax.fill_between(range(1, 189), data.flatten(), pred[0], alpha=0.3, color="r")
+    ax.fill_between(range(1, 188), data.flatten(), pred[0], alpha=0.3, color="r")
     ax.legend(shadow=True, frameon=True,
               facecolor="inherit", loc=1, fontsize=7)
 #                bbox_to_anchor = (0, 0, 0.8, 0.25))
