@@ -170,7 +170,9 @@ def app():
         # Display captured summary
         st.text('\n'.join(summary_str))
 
-
+# Custom print function to capture summary output
+def capture_summary(x, summary_str):
+    summary_str.append(x)
 
 tf.keras.utils.set_random_seed(1024)
 class AutoEncoder(Model):
