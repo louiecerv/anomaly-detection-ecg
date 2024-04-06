@@ -174,8 +174,19 @@ def app():
         batch_size = 128
         early_stopping = EarlyStopping(patience=10, min_delta=1e-3, monitor="val_loss", restore_best_weights=True)
 
-        history = model.fit(X_train, X_train, epochs=epochs, batch_size=batch_size,
-                            validation_split=0.1, callbacks=[early_stopping])
+        with contextlib.redirect_stdout(io.StringIO()) as new_stdout:
+            history = model.fit(X_train, X_train, epochs=epochs, batch_size=batch_size,
+                                validation_split=0.1, callbacks=[early_stopping])
+            training_output = new_stdout.getvalue()
+
+        # Display entire output as text
+        st.text(training_output)
+
+        # Alternatively, structure and format output elements as needed
+        st.write("Training history:")
+        st.write(history.history)
+        st.write("Best validation loss:", history.history['val_loss'][-1])
+
         
         # Create a figure and an axes object
         fig, ax = plt.subplots()
@@ -194,8 +205,6 @@ def app():
 
         # Show the plot
         st.pyplot(fig)
-
-
 
 
 tf.keras.utils.set_random_seed(1024)
