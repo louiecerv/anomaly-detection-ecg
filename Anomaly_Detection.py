@@ -212,6 +212,43 @@ def app():
         plt.tight_layout()  # Adjust spacing between subplots
         st.pyplot(fig)   
 
+        train_mae = model.evaluate(X_train, X_train, verbose=0)
+        test_mae = model.evaluate(X_test, X_test, verbose=0)
+        anomaly_mae = model.evaluate(anomaly_df, anomaly_df, verbose=0)
+        st.write("Training dataset error: ", train_mae)
+        st.write("Testing dataset error: ", test_mae)
+        st.write("Anomaly dataset error: ", anomaly_mae)
+
+        _, train_loss = predict(model, X_train)
+        _, test_loss = predict(model, X_test)
+        _, anomaly_loss = predict(model, anomaly)
+        threshold = np.mean(train_loss) + np.std(train_loss) # Setting threshold for distinguish normal data from anomalous data
+
+        bins = 40
+
+        # Create the figure and axes objects explicitly
+        fig, ax = plt.subplots(figsize=(9, 5), dpi=100)
+
+        # Create the histograms using ax
+        sns.histplot(np.clip(train_loss, 0, 0.5), bins=bins, kde=True, label="Train Normal", ax=ax)
+        sns.histplot(np.clip(test_loss, 0, 0.5), bins=bins, kde=True, label="Test Normal", ax=ax)
+        sns.histplot(np.clip(anomaly_loss, 0, 0.5), bins=bins, kde=True, label="Anomaly", ax=ax)
+
+        # Add vertical line and annotation using ax
+        ylim = ax.get_ylim()
+        ax.vlines(threshold, 0, ylim[-1], color="k", ls="--")
+        ax.annotate(f"Threshold: {threshold:.3f}", xy=(threshold, ylim[-1]), xytext=(threshold + 0.009, ylim[-1]),
+                arrowprops=dict(facecolor='black', shrink=0.05), fontsize=9)
+
+        # Add legend and display plot
+        ax.legend(shadow=True, frameon=True, facecolor="inherit", loc="best", fontsize=9)
+        st.pyplot(fig)
+
+def predict(model, X):
+    pred = model.predict(X, verbose=False)
+    loss = mae(pred, X)
+    return pred, loss
+
 tf.keras.utils.set_random_seed(1024)
 
 class AutoEncoder(Model):
