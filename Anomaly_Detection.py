@@ -159,8 +159,13 @@ def app():
         model = AutoEncoder(input_dim, latent_dim)
         model.build((None, input_dim))
         model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss="mae")
-        summary = model.summary()
-        st.write(summary)
+
+        # Display the summary using st.text()
+        with st.echo():
+            summary_str = []
+            model.summary(print_fn=lambda x: summary_str.append(x))
+            st.text('\n'.join(summary_str))
+
 
 
 tf.keras.utils.set_random_seed(1024)
