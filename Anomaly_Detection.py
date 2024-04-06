@@ -170,6 +170,17 @@ def app():
         # Display the summary using st.text()
         st.text(summary_str)
 
+        epochs = 100
+        batch_size = 128
+        early_stopping = EarlyStopping(patience=10, min_delta=1e-3, monitor="val_loss", restore_best_weights=True)
+
+        # Capture the summary output
+        with contextlib.redirect_stdout(io.StringIO()) as new_stdout:
+            history = model.fit(X_train, X_train, epochs=epochs, batch_size=batch_size,
+                            validation_split=0.1, callbacks=[early_stopping])
+        st.text(summary_str)
+
+
 tf.keras.utils.set_random_seed(1024)
 
 class AutoEncoder(Model):
