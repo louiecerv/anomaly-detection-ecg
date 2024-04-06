@@ -116,7 +116,7 @@ def app():
     normal_df = pd.read_csv("heartbeats/ptbdb_normal.csv", header=0)
     anomaly_df = pd.read_csv("heartbeats/ptbdb_abnormal.csv", header=0)
 
-    st.subheader('Browse the normal ECG Dataset')
+    st.subheader('Browse the ECG Dataset')
     st.write(normal_df)
 
     st.write("Shape of Normal data", normal_df.shape)
@@ -176,7 +176,7 @@ def app():
 
         with contextlib.redirect_stdout(io.StringIO()) as new_stdout:
             history = model.fit(X_train, X_train, epochs=epochs, batch_size=batch_size,
-                                validation_split=0.1, callbacks=[early_stopping])
+                        validation_split=0.1, callbacks=[early_stopping, CustomCallback()])
             training_output = new_stdout.getvalue()
 
         # Display entire output as text
@@ -205,7 +205,6 @@ def app():
 
         # Show the plot
         st.pyplot(fig)
-
 
 tf.keras.utils.set_random_seed(1024)
 
@@ -248,7 +247,17 @@ class AutoEncoder(Model):
         encoded = self.encoder(X)
         decoded = self.decoder(encoded)
         return decoded
-    
+
+# Define a custom callback function to update the Streamlit interface
+class CustomCallback(tf.keras.callbacks.Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        # Get the current loss and accuracy metrics
+        loss = logs['loss']
+        accuracy = logs['accuracy']
+        
+        # Update the Streamlit interface with the current epoch's output
+        st.text(f"Epoch {epoch}: loss = {loss:.4f}, accuracy = {accuracy:.4f}")
+
 #run the app
 if __name__ == "__main__":
     app()
