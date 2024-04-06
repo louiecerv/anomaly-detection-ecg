@@ -318,12 +318,14 @@ def plot_confusion_matrix(model, train, test, anomaly, threshold):
     data = np.array([f"{count}\n({pct:.2%})" for count, pct in zip(cm.ravel(), cm_norm.ravel())]).reshape(cm.shape)
     labels = ["Anomaly", "Normal"]
 
-    plt.figure(figsize=(5, 4))
-    sns.heatmap(cm, annot=data, fmt="", xticklabels=labels, yticklabels=labels)
-    plt.ylabel("Actual")
-    plt.xlabel("Predicted")
-    plt.title("Confusion Matrix", weight="bold")
+    # Create the figure and axes objects
+    fig, ax = plt.subplots(figsize=(5, 4))
+    sns.heatmap(cm, annot=data, fmt="", xticklabels=labels, yticklabels=labels, ax=ax)
+    ax.set_ylabel("Actual")
+    ax.set_xlabel("Predicted")
+    ax.set_title("Confusion Matrix", weight="bold")
     plt.tight_layout()
+    st.pyplot(fig)
 
 tf.keras.utils.set_random_seed(1024)
 
