@@ -134,6 +134,13 @@ def app():
     plt.tight_layout()
     st.pyplot(fig)
 
+    normal_df.drop("target", axis=1, errors="ignore", inplace=True)
+    normal = normal_df.to_numpy()
+    anomaly_df.drop("target", axis=1, errors="ignore", inplace=True)
+    anomaly = anomaly_df.to_numpy()
+
+    X_train, X_test = train_test_split(normal, test_size=0.15, random_state=45, shuffle=True)
+    st.write(f"Train shape: {X_train.shape}, Test shape: {X_test.shape}, anomaly shape: {anomaly.shape}")
 
 #run the app
 if __name__ == "__main__":
