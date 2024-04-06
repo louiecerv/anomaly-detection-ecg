@@ -264,6 +264,8 @@ def app():
         st.write("Testing", evaluate_model(threshold, anomaly, model, X_test))
         st.write("Anomaly", evaluate_model(threshold, anomaly, model, anomaly))
 
+        plot_confusion_matrix(model, X_train, X_test, anomaly, threshold=threshold)
+
 def predict(model, X):
     pred = model.predict(X, verbose=False)
     loss = mae(pred, X)
@@ -287,6 +289,41 @@ def evaluate_model(threshold, anomaly, model, data):
         accuracy = np.sum(loss <= threshold)/len(data)
     return f"Accuracy: {accuracy:.2%}"
 
+def prepare_labels(model, train, test, anomaly, threshold=threshold):
+    ytrue = np.concatenate((np.ones(len(X_train)+len(X_test), dtype=int), np.zeros(len(anomaly), dtype=int)))
+    _, train_loss = predict(model, train)
+    _, test_loss = predict(model, test)
+    _, anomaly_loss = predict(model, anomaly)
+    train_pred = (train_loss <= threshold).numpy().astype(int)
+    test_pred = (test_loss <= threshold).numpy().astype(int)
+    anomaly_pred = (anomaly_loss < threshold).numpy().astype(int)
+    ypred = np.concatenate((train_pred, test_pred, anomaly_pred))
+    return ytrue, ypred
+
+def plot_confusion_matrix(model, train, test, anomaly, threshold=threshold):
+    ytrue, ypred = prepare_labels(model, train, test, anomaly, threshold=threshold)
+    accuracy = accuracy_score(ytrue, ypred)
+    precision = precision_score(ytrue, ypred)
+    recall = recall_score(ytrue, ypred)
+    f1 = f1_score(ytrue, ypred)
+    print(f"""\
+        Accuracy: {accuracy:.2%}
+        Precision: {precision:.2%}
+        Recall: {recall:.2%}
+        f1: {f1:.2%}\n
+        """)
+
+    cm = confusion_matrix(ytrue, ypred)
+    cm_norm = confusion_matrix(ytrue, ypred, normalize="true")
+    data = np.array([f"{count}\n({pct:.2%})" for count, pct in zip(cm.ravel(), cm_norm.ravel())]).reshape(cm.shape)
+    labels = ["Anomaly", "Normal"]
+
+    plt.figure(figsize=(5, 4))
+    sns.heatmap(cm, annot=data, fmt="", xticklabels=labels, yticklabels=labels)
+    plt.ylabel("Actual")
+    plt.xlabel("Predicted")
+    plt.title("Confusion Matrix", weight="bold")
+    plt.tight_layout()
 
 tf.keras.utils.set_random_seed(1024)
 
