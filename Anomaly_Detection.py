@@ -14,7 +14,6 @@ import time
 # Define the Streamlit app
 def app():
 
-
     if "X_train" not in st.session_state:
         st.session_state.X_train = []
 
@@ -70,8 +69,10 @@ def app():
     text = """Number of Samples: 14,552 Number of Categories: 2 Sampling Frequency: 125Hz 
     Data Source: Physionet's PTB Diagnostic Database """
 
-    normal_df = pd.read_csv("heartbeats\ptbdb_normal.csv").iloc[:, :-1]
-    anomaly_df = pd.read_csv("heartbeats\ptbdb_abnormal.csv").iloc[:, :-1]
+    #normal_df = pd.read_csv("heartbeats/ptbdb_normal.csv").iloc[:, :-1]
+    #anomaly_df = pd.read_csv("heartbeats/ptbdb_abnormal.csv").iloc[:, :-1]
+    normal_df = pd.read_csv("heartbeats/ptbdb_normal.csv", header=0)
+    anomaly_df = pd.read_csv("heartbeats/ptbdb_abnormal.csv", header=0)
 
     st.subheader('Browse the normal ECG Dataset')
     st.write(normal_df)
@@ -81,9 +82,42 @@ def app():
 
     plot_sample(normal_df, anomaly_df)
 
+    CLASS_NAMES = ["Normal", "Anomaly"]
+
+    normal_df_copy = normal_df.copy()
+    anomaly_df_copy = anomaly_df.copy()
+
+    normal_df_copy = normal_df_copy.set_axis(range(1, 188), axis=1)
+    anomaly_df_copy = anomaly_df_copy.set_axis(range(1, 188), axis=1)
+    normal_df_copy = normal_df_copy.assign(target = CLASS_NAMES[0])
+    anomaly_df_copy = anomaly_df_copy.assign(target = CLASS_NAMES[1])
+    df = pd.concat((normal_df_copy, anomaly_df_copy))
+
+    fig, axes = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
+    axes = axes.flatten()
+    for i, label in enumerate(CLASS_NAMES, start=1):
+        data_group = df.groupby("target")
+        data = data_group.get_group(label).mean(axis=0, numeric_only=True).to_numpy()
+        plot_smoothed_mean(data, class_name=label, step_size=20, ax=axes[i-1])
+    fig.suptitle("Plot of smoothed mean for each class", y=0.95, weight="bold")
+    plt.tight_layout()
+    st.pyplot(fig)
+
+def plot_smoothed_mean(data, class_name = "normal", step_size=5, ax=None):
+    df = pd.DataFrame(data)
+    roll_df = df.rolling(step_size)
+    smoothed_mean = roll_df.mean().dropna().reset_index(drop=True)
+    smoothed_std = roll_df.std().dropna().reset_index(drop=True)
+    margin = 3*smoothed_std
+    lower_bound = (smoothed_mean - margin).values.flatten()
+    upper_bound = (smoothed_mean + margin).values.flatten()
+
+    ax.plot(smoothed_mean.index, smoothed_mean)
+    ax.fill_between(smoothed_mean.index, lower_bound, y2=upper_bound, alpha=0.3, color="red")
+    ax.set_title(class_name, fontsize=9)
 
 def plot_sample(normal, anomaly):
-    index = np.random.randint(0, len(normal_df), 2)
+    index = np.random.randint(0, len(normal), 2)
 
     fig, ax = plt.subplots(1, 2, sharey=True, figsize=(10, 4))
     ax[0].plot(normal.iloc[index[0], :].values, label=f"Case {index[0]}")
