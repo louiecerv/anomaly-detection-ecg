@@ -1,108 +1,387 @@
 #Input the relevant libraries
-import numpy as np
-import pandas as pd
 import streamlit as st
+import numpy as np
+np.set_printoptions(suppress=True)
+import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn import tree
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import confusion_matrix, classification_report
+from scipy.io import arff
+from sklearn.model_selection import train_test_split
+import matplotlib
+matplotlib.rcParams["figure.figsize"] = (6, 4)
+plt.style.use("ggplot")
+import tensorflow as tf
+from tensorflow import data
+from tensorflow.keras.models import Model, Sequential
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.metrics import mae
+from tensorflow.keras import layers
+from tensorflow import keras
+from sklearn.metrics import accuracy_score, recall_score, precision_score, confusion_matrix, f1_score, classification_report
+import os
 import time
+import contextlib
+import io  # Import the io module
+
+def plot_smoothed_mean(data, class_name = "normal", step_size=5, ax=None):
+    df = pd.DataFrame(data)
+    roll_df = df.rolling(step_size)
+    smoothed_mean = roll_df.mean().dropna().reset_index(drop=True)
+    smoothed_std = roll_df.std().dropna().reset_index(drop=True)
+    margin = 3*smoothed_std
+    lower_bound = (smoothed_mean - margin).values.flatten()
+    upper_bound = (smoothed_mean + margin).values.flatten()
+
+    ax.plot(smoothed_mean.index, smoothed_mean)
+    ax.fill_between(smoothed_mean.index, lower_bound, y2=upper_bound, alpha=0.3, color="red")
+    ax.set_title(class_name, fontsize=9)
+
+def plot_sample(normal, anomaly):
+    index = np.random.randint(0, len(normal), 2)
+
+    fig, ax = plt.subplots(1, 2, sharey=True, figsize=(10, 4))
+    ax[0].plot(normal.iloc[index[0], :].values, label=f"Case {index[0]}")
+    ax[0].plot(normal.iloc[index[1], :].values, label=f"Case {index[1]}")
+    ax[0].legend(shadow=True, frameon=True, facecolor="inherit", loc=1, fontsize=9)
+    ax[0].set_title("Normal")
+
+    ax[1].plot(anomaly.iloc[index[0], :].values, label=f"Case {index[0]}")
+    ax[1].plot(anomaly.iloc[index[1], :].values, label=f"Case {index[1]}")
+    ax[1].legend(shadow=True, frameon=True, facecolor="inherit", loc=1, fontsize=9)
+    ax[1].set_title("Anomaly")
+
+    plt.tight_layout()
+    st.pyplot(fig)
 
 # Define the Streamlit app
 def app():
+
+    if "X_train" not in st.session_state:
+        st.session_state.X_train = []
+
+    if "X_test" not in st.session_state:
+            st.session_state.X_test = []
+
+    if "y_train" not in st.session_state:
+            st.session_state.y_train = []
+
+    if "y_test" not in st.session_state:
+            st.session_state.y_test = []
+
+
     if "dataset_ready" not in st.session_state:
-        st.error("Dataset must be loaded. Click Heart Disease in the sidebar.")
-        
-    st.subheader("Binary Classification of Breast Cancer using KNN, SVM, and Naive Bayes")
-    text = """This is a binary classification task aimed at predicting whether a tumor is malignant 
-    (cancerous) or benign (non-cancerous) based on a set of features extracted from breast 
-    tissue samples. 
-    \n**Dataset:** A popular dataset for this task is the Wisconsin Diagnostic Breast Cancer 
-    (WDBC) dataset available from the UCI Machine Learning Repository This dataset contains 
-    information on several features like clump thickness, cell size uniformity, and
-      marginal adhesion, along with a class label (malignant or benign) for each sample.
-    \n**Algorithms:**
-    \n* **K-Nearest Neighbors (KNN):** 
-    * Classifies a new data point by considering the labels of its k nearest neighbors in the training data. 
-    * In the breast cancer context, if the majority of the k nearest neighbors (based on feature similarity) are malignant in the training data, the new data point is classified as malignant and vice versa. 
-    * Tuning the parameter k is crucial for optimal performance.
-    \n* **Support Vector Machine (SVM):** 
-    *  Finds a hyperplane in the feature space that best separates the data points belonging to different classes (malignant and benign) with the maximum margin. 
-    *  This hyperplane can then be used to classify new data points. 
-    *  SVMs are powerful for high-dimensional data and can handle non-linear relationships between features, but selecting the right kernel function can be important.
-    \n* **Naive Bayes:**
-    * A probabilistic classifier based on Bayes' theorem. 
-    * It assumes independence between features, which may not always hold true for real-world data like breast cancer. 
-    *  However, Naive Bayes is efficient to train and can be a good baseline for comparison. 
-    *  It calculates the probability of a data point belonging to each class (malignant or benign) based on the individual feature probabilities. The class with the highest probability is assigned.
-    \nThe performance of these algorithms can be evaluated using metrics like accuracy, precision, recall, 
-    and F1-score. These metrics  consider the number of correctly classified and incorrectly classified 
-    malignant and benign tumors. """
+        st.session_state.dataset_ready = False 
+
+    text = """Anomaly Detection in ECG using CNN Autoencoders"""
+    st.header(text)
+
+    text = """Prof. Louie F. Cervantes, M. Eng. (Information Engineering) \n
+    CCS 229 - Intelligent Systems
+    Department of Computer Science
+    College of Information and Communications Technology
+    West Visayas State University"""
+    st.text(text)
+
+    st.image('ecg.png', caption="ECG Anomaly Detection")
+
+    text = """This Streamlit app is designed for anomaly detection in electrocardiogram (ECG) data 
+    using a convolutional neural network (CNN) autoencoder implemented in TensorFlow. 
+    This app provides a user-friendly interface for analyzing ECG signals to detect anomalies, 
+    which can be indicative of various cardiac conditions. Leveraging the power of deep learning, 
+    our CNN autoencoder model learns the underlying patterns of normal ECG signals during training 
+    and can subsequently identify deviations from these patterns as potential anomalies in real-time 
+    data. With this tool, healthcare professionals and researchers can efficiently process ECG data, 
+    assisting in early detection and diagnosis of cardiac abnormalities. Explore the functionalities 
+    of our app to seamlessly visualize, analyze, and interpret ECG signals for enhanced patient 
+    care and medical research.
+    """
     st.write(text)
+    st.image('autoencoder.png', caption="Convolutional Neural Network Autoencoder")
+    text = """A CNN autoencoder is a deep learning architecture adept at capturing intricate 
+    patterns within data by compressing it into a latent representation and then reconstructing it. 
+    In our context, the CNN autoencoder learns to encode normal ECG signals into a compact 
+    representation, which is then decoded back to reconstruct the original signal. 
+    However, when presented with anomalous ECG patterns, the reconstruction error is typically 
+    higher, signifying a deviation from the learned normal patterns. By leveraging TensorFlow, a 
+    powerful deep learning framework, our app facilitates the seamless application of CNN 
+    autoencoders for real-time anomaly detection in ECG data, providing a valuable tool for 
+    healthcare professionals and researchers to identify potential cardiac 
+    irregularities efficiently."""
+    st.write(text)
+    text = """Number of Samples: 14,552 Number of Categories: 2 Sampling Frequency: 125Hz 
+    Data Source: Physionet's PTB Diagnostic Database """
 
-    #add the classifier selection to the sidebar
-    clf = KNeighborsClassifier(n_neighbors=5)
-    options = ['K Nearest Neighbor', 'Support Vector Machine', 'Naive Bayes']
-    selected_option = st.sidebar.selectbox('Select the classifier', options)
-    if selected_option =='Support Vector Machine':
-        clf = SVC(kernel='linear')
-        st.session_state['selected_model'] = 1
-    elif selected_option=='Naive Bayes':        
-        clf = GaussianNB()
-        st.session_state['selected_model'] = 2
+    normal_df = pd.read_csv("heartbeats/ptbdb_normal.csv").iloc[:, :-1]
+    anomaly_df = pd.read_csv("heartbeats/ptbdb_abnormal.csv").iloc[:, :-1]
+    #normal_df = pd.read_csv("heartbeats/ptbdb_normal.csv")
+    #anomaly_df = pd.read_csv("heartbeats/ptbdb_abnormal.csv")
+
+    st.subheader('Browse the ECG Dataset')
+    st.write(normal_df)
+
+    st.write("Shape of Normal data", normal_df.shape)
+    st.write("Shape of Abnormal data", anomaly_df.shape)
+
+    plot_sample(normal_df, anomaly_df)
+
+    CLASS_NAMES = ["Normal", "Anomaly"]
+
+    normal_df_copy = normal_df.copy()
+    anomaly_df_copy = anomaly_df.copy()
+
+    normal_df_copy = normal_df_copy.set_axis(range(1, 188), axis=1)
+    anomaly_df_copy = anomaly_df_copy.set_axis(range(1, 188), axis=1)
+    normal_df_copy = normal_df_copy.assign(target = CLASS_NAMES[0])
+    anomaly_df_copy = anomaly_df_copy.assign(target = CLASS_NAMES[1])
+    df = pd.concat((normal_df_copy, anomaly_df_copy))
+
+
+    fig, axes = plt.subplots(1, 2, figsize=(8, 4), sharey=True)
+    axes = axes.flatten()
+    for i, label in enumerate(CLASS_NAMES, start=1):
+        data_group = df.groupby("target")
+        data = data_group.get_group(label).mean(axis=0, numeric_only=True).to_numpy()
+        plot_smoothed_mean(data, class_name=label, step_size=20, ax=axes[i-1])
+    fig.suptitle("Plot of smoothed mean for each class", y=0.95, weight="bold")
+    plt.tight_layout()
+    st.pyplot(fig)
+
+    normal_df.drop("target", axis=1, errors="ignore", inplace=True)
+    normal = normal_df.to_numpy()
+    anomaly_df.drop("target", axis=1, errors="ignore", inplace=True)
+    anomaly = anomaly_df.to_numpy()
+
+    X_train, X_test = train_test_split(normal, test_size=0.15, random_state=45, shuffle=True)
+    st.write(f"Train shape: {X_train.shape}, Test shape: {X_test.shape}, anomaly shape: {anomaly.shape}")
+
+    if st.button("Start"):
+        input_dim = X_train.shape[-1]
+        latent_dim = 32
+
+        model = AutoEncoder(input_dim, latent_dim)
+        model.build((None, input_dim))
+        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), loss="mae", metrics=['mean_squared_error', 'mean_absolute_error'])
+
+        # Capture the summary output
+        with contextlib.redirect_stdout(io.StringIO()) as new_stdout:
+            model.summary()
+            summary_str = new_stdout.getvalue()
+        # Display the summary using st.text()
+        st.text(summary_str)
+
+        epochs = 100
+        batch_size = 128
+        early_stopping = EarlyStopping(patience=10, min_delta=1e-3, monitor="val_loss", restore_best_weights=True)
+
+
+        history = model.fit(X_train, X_train, epochs=epochs, batch_size=batch_size,
+            validation_split=0.1, callbacks=[early_stopping, CustomCallback()])
+
+        st.write("Best validation loss:", history.history['val_loss'][-1])
+
+         # Extract loss and MAE/MSE values from history
+        train_loss = history.history['loss']
+        val_loss = history.history['val_loss']
+        train_mae = history.history['mean_absolute_error']
+        val_mae = history.history['val_mean_absolute_error']
+        train_mse = history.history['mean_squared_error']
+        val_mse = history.history['val_mean_squared_error']
+
+        # Create the figure with two side-by-side subplots
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))  # Adjust figsize for better visualization
+
+        # Plot loss on the first subplot (ax1)
+        ax1.plot(train_loss, label='Training Loss')
+        ax1.plot(val_loss, label='Validation Loss')
+        ax1.set_xlabel('Epoch')
+        ax1.set_ylabel('Loss')
+        ax1.legend()
+
+        # Plot accuracy on the second subplot (ax2)
+        ax2.plot(train_mae, 'g--', label='Training Mean Absolute Error')
+        ax2.plot(train_mse, 'g--', label='Training Mean Squared Error')
+        ax2.plot(val_mae, 'r--', label='Validation Mean Absolute Error')
+        ax2.plot(val_mse, 'r--', label='Validation Mean Squared Error')
+        ax2.set_xlabel('Epoch')
+        ax2.set_ylabel('Accuracy')
+        ax2.legend()
+
+        # Set the main title (optional)
+        fig.suptitle('Training and Validation Performance')
+
+        plt.tight_layout()  # Adjust spacing between subplots
+        st.pyplot(fig)   
+
+        train_mae = model.evaluate(X_train, X_train, verbose=0)
+        test_mae = model.evaluate(X_test, X_test, verbose=0)
+        anomaly_mae = model.evaluate(anomaly_df, anomaly_df, verbose=0)
+        st.write("Training dataset error: ", train_mae)
+        st.write("Testing dataset error: ", test_mae)
+        st.write("Anomaly dataset error: ", anomaly_mae)
+
+        _, train_loss = predict(model, X_train)
+        _, test_loss = predict(model, X_test)
+        _, anomaly_loss = predict(model, anomaly)
+        threshold = np.mean(train_loss) + np.std(train_loss) # Setting threshold for distinguish normal data from anomalous data
+
+        bins = 40
+
+        # Create the figure and axes objects explicitly
+        fig, ax = plt.subplots(figsize=(9, 5), dpi=100)
+
+        # Create the histograms using ax
+        sns.histplot(np.clip(train_loss, 0, 0.5), bins=bins, kde=True, label="Train Normal", ax=ax)
+        sns.histplot(np.clip(test_loss, 0, 0.5), bins=bins, kde=True, label="Test Normal", ax=ax)
+        sns.histplot(np.clip(anomaly_loss, 0, 0.5), bins=bins, kde=True, label="Anomaly", ax=ax)
+
+        # Add vertical line and annotation using ax
+        ylim = ax.get_ylim()
+        ax.vlines(threshold, 0, ylim[-1], color="k", ls="--")
+        ax.annotate(f"Threshold: {threshold:.3f}", xy=(threshold, ylim[-1]), xytext=(threshold + 0.009, ylim[-1]),
+                arrowprops=dict(facecolor='black', shrink=0.05), fontsize=9)
+
+        # Add legend and display plot
+        ax.legend(shadow=True, frameon=True, facecolor="inherit", loc="best", fontsize=9)
+        st.pyplot(fig)
+
+        fig, axes = plt.subplots(2, 5, sharey=True, sharex=True, figsize=(12, 6))
+        random_indexes = np.random.randint(0, len(X_train), size=5)
+
+        for i, idx in enumerate(random_indexes):
+            data = X_train[[idx]]
+            plot_examples(model, data, ax=axes[0, i], title="Normal")
+
+        for i, idx in enumerate(random_indexes):
+            data = anomaly[[idx]]
+            plot_examples(model, data, ax=axes[1, i], title="anomaly")
+
+        plt.tight_layout()
+        fig.suptitle("Sample plots (Actual vs Reconstructed by the CNN autoencoder)", y=1.04, weight="bold")
+        fig.savefig("autoencoder.png")
+        st.pyplot(fig)
+
+        st.write("Training", evaluate_model(threshold, anomaly, model, X_train))
+        st.write("Testing", evaluate_model(threshold, anomaly, model, X_test))
+        st.write("Anomaly", evaluate_model(threshold, anomaly, model, anomaly))
+
+        plot_confusion_matrix(model, X_train, X_test, anomaly, threshold)
+
+        ytrue, ypred = prepare_labels(model, X_train, X_test, anomaly, threshold)
+        #use text and not write for correct formatting
+        st.text(classification_report(ytrue, ypred, target_names=CLASS_NAMES))
+
+def predict(model, X):
+    pred = model.predict(X, verbose=False)
+    loss = mae(pred, X)
+    return pred, loss
+
+def plot_examples(model, data, ax, title):
+    pred, loss = predict(model, data)
+    ax.plot(data.flatten(), label="Actual")
+    ax.plot(pred[0], label = "Predicted")
+    ax.fill_between(range(1, 188), data.flatten(), pred[0], alpha=0.3, color="r")
+    ax.legend(shadow=True, frameon=True,
+              facecolor="inherit", loc=1, fontsize=7)
+#                bbox_to_anchor = (0, 0, 0.8, 0.25))
+    ax.set_title(f"{title} (loss: {loss[0]:.3f})", fontsize=9.5)
+
+def evaluate_model(threshold, anomaly, model, data):
+    pred, loss = predict(model, data)
+    if id(data) == id(anomaly):
+        accuracy = np.sum(loss > threshold)/len(data)
     else:
-        clf = KNeighborsClassifier(n_neighbors=5)
-        st.session_state['selected_model'] = 0
+        accuracy = np.sum(loss <= threshold)/len(data)
+    return f"Accuracy: {accuracy:.2%}"
 
-    X_train = st.session_state.X_train
-    y_train = st.session_state.y_train
-    X_test = st.session_state.X_test
-    y_test = st.session_state.y_test
+def prepare_labels(model, train, test, anomaly, threshold):
+    ytrue = np.concatenate((np.ones(len(train)+len(test), dtype=int), np.zeros(len(anomaly), dtype=int)))
+    _, train_loss = predict(model, train)
+    _, test_loss = predict(model, test)
+    _, anomaly_loss = predict(model, anomaly)
+    train_pred = (train_loss <= threshold).numpy().astype(int)
+    test_pred = (test_loss <= threshold).numpy().astype(int)
+    anomaly_pred = (anomaly_loss < threshold).numpy().astype(int)
+    ypred = np.concatenate((train_pred, test_pred, anomaly_pred))
+    return ytrue, ypred
 
-    if st.button("Begin Training"):
+def plot_confusion_matrix(model, train, test, anomaly, threshold):
+    ytrue, ypred = prepare_labels(model, train, test, anomaly, threshold)
+    accuracy = accuracy_score(ytrue, ypred)
+    precision = precision_score(ytrue, ypred)
+    recall = recall_score(ytrue, ypred)
+    f1 = f1_score(ytrue, ypred)
+    st.write(f"""\
+        Accuracy: {accuracy:.2%}
+        Precision: {precision:.2%}
+        Recall: {recall:.2%}
+        f1: {f1:.2%}\n
+        """)
 
-        if selected_option =='K Nearest Neighbor':
-            text = """KNN achieves good accuracy on the heart disease dataset, often 
-            reaching around 85-90%. However, it can be slow for large datasets 
-            due to needing to compare each test image to all training images. 
-            Additionally, choosing the optimal number of neighbors (k) can be 
-            crucial for performance."""
-            classifier = 'K-Nearest Neighbor'
-        elif st.session_state['selected_model'] == 1:   # SVM
-            text = """SVM can also achieve high accuracy on this dataset, 
-            similar to KNN. It offers advantages like being memory-efficient, 
-            but choosing the right kernel function and its parameters 
-            can be challenging."""
-            classifier = 'Support Vector Machine'
-        elif selected_option=='Naive Bayes': 
-            text = """Naive Bayes is generally faster than the other two options but 
-            may achieve slightly lower accuracy, typically around 80-85%. It performs 
-            well when the features are independent, which might not perfectly hold true 
-            for data found in the heart disease dataset."""
-            classifier = "Naive Bayes"
+    cm = confusion_matrix(ytrue, ypred)
+    cm_norm = confusion_matrix(ytrue, ypred, normalize="true")
+    data = np.array([f"{count}\n({pct:.2%})" for count, pct in zip(cm.ravel(), cm_norm.ravel())]).reshape(cm.shape)
+    labels = ["Anomaly", "Normal"]
 
-        st.subheader('Performance of ' + classifier)
-        st.write(text)
+    # Create the figure and axes objects
+    fig, ax = plt.subplots(figsize=(5, 4))
+    sns.heatmap(cm, annot=data, fmt="", xticklabels=labels, yticklabels=labels, ax=ax)
+    ax.set_ylabel("Actual")
+    ax.set_xlabel("Predicted")
+    ax.set_title("Confusion Matrix", weight="bold")
+    plt.tight_layout()
+    st.pyplot(fig)
 
-        clf.fit(X_train, y_train)
-        y_test_pred = clf.predict(X_test)
+tf.keras.utils.set_random_seed(1024)
 
-        st.subheader('Confusion Matrix')
-        st.write('Confusion Matrix')
-        cm = confusion_matrix(y_test, y_test_pred)
-        st.text(cm)
+class AutoEncoder(Model):
+    def __init__(self, input_dim, latent_dim):
+        super(AutoEncoder, self).__init__()
+        self.input_dim = input_dim
+        self.latent_dim = latent_dim
 
-        st.subheader('Performance Metrics')
-        st.text(classification_report(y_test, y_test_pred))
+        self.encoder = tf.keras.Sequential([
+            layers.Input(shape=(input_dim,)),
+            layers.Reshape((input_dim, 1)),  # Reshape to 3D for Conv1D
+            layers.Conv1D(128, 3, strides=1, activation='relu', padding="same"),
+            layers.BatchNormalization(),
+            layers.MaxPooling1D(2, padding="same"),
+            layers.Conv1D(128, 3, strides=1, activation='relu', padding="same"),
+            layers.BatchNormalization(),
+            layers.MaxPooling1D(2, padding="same"),
+            layers.Conv1D(latent_dim, 3, strides=1, activation='relu', padding="same"),
+            layers.BatchNormalization(),
+            layers.MaxPooling1D(2, padding="same"),
+        ])
 
+        self.decoder = tf.keras.Sequential([
+            layers.Conv1DTranspose(latent_dim, 3, strides=1, activation='relu', padding="same"),
+            layers.BatchNormalization(),
+            layers.Conv1DTranspose(128, 3, strides=1, activation='relu', padding="same"),
+            layers.BatchNormalization(),
+            layers.Conv1DTranspose(128, 3, strides=1, activation='relu', padding="same"),
+            layers.BatchNormalization(),
+            layers.Flatten(),
+            layers.Dense(input_dim)
+        ])
 
+    def build(self, input_shape):  # Define the build method
+        # No need to modify anything here as layers are already built during initialization
+        super(AutoEncoder, self).build(input_shape)
 
+    def call(self, X):
+        encoded = self.encoder(X)
+        decoded = self.decoder(encoded)
+        return decoded
 
-
-
+# Define a custom callback function to update the Streamlit interface
+class CustomCallback(tf.keras.callbacks.Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        # Get the current loss and accuracy metrics
+        loss = logs['loss']
+        mae = logs['mean_absolute_error']
+        
+        # Update the Streamlit interface with the current epoch's output
+        st.text(f"Epoch {epoch}: loss = {loss:.4f} Mean Absolute Errror = {mae:.4f}")
 
 #run the app
 if __name__ == "__main__":
