@@ -110,6 +110,7 @@ def app():
     st.write(text)
     text = """Number of Samples: 14,552 Number of Categories: 2 Sampling Frequency: 125Hz 
     Data Source: Physionet's PTB Diagnostic Database """
+    st.write(text)
 
     normal_df = pd.read_csv("heartbeats/ptbdb_normal.csv").iloc[:, :-1]
     anomaly_df = pd.read_csv("heartbeats/ptbdb_abnormal.csv").iloc[:, :-1]
