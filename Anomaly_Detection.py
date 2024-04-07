@@ -111,10 +111,10 @@ def app():
     text = """Number of Samples: 14,552 Number of Categories: 2 Sampling Frequency: 125Hz 
     Data Source: Physionet's PTB Diagnostic Database """
 
-    #normal_df = pd.read_csv("heartbeats/ptbdb_normal.csv").iloc[:, :-1]
-    #anomaly_df = pd.read_csv("heartbeats/ptbdb_abnormal.csv").iloc[:, :-1]
-    normal_df = pd.read_csv("heartbeats/ptbdb_normal.csv")
-    anomaly_df = pd.read_csv("heartbeats/ptbdb_abnormal.csv")
+    normal_df = pd.read_csv("heartbeats/ptbdb_normal.csv").iloc[:, :-1]
+    anomaly_df = pd.read_csv("heartbeats/ptbdb_abnormal.csv").iloc[:, :-1]
+    #normal_df = pd.read_csv("heartbeats/ptbdb_normal.csv")
+    #anomaly_df = pd.read_csv("heartbeats/ptbdb_abnormal.csv")
 
     st.subheader('Browse the ECG Dataset')
     st.write(normal_df)
