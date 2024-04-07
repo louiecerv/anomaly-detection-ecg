@@ -129,8 +129,8 @@ def app():
     normal_df_copy = normal_df.copy()
     anomaly_df_copy = anomaly_df.copy()
 
-    normal_df_copy = normal_df_copy.set_axis(range(1, 189), axis=1)
-    anomaly_df_copy = anomaly_df_copy.set_axis(range(1, 189), axis=1)
+    normal_df_copy = normal_df_copy.set_axis(range(1, 188), axis=1)
+    anomaly_df_copy = anomaly_df_copy.set_axis(range(1, 188), axis=1)
     normal_df_copy = normal_df_copy.assign(target = CLASS_NAMES[0])
     anomaly_df_copy = anomaly_df_copy.assign(target = CLASS_NAMES[1])
     df = pd.concat((normal_df_copy, anomaly_df_copy))
